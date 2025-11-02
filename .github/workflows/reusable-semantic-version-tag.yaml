@@ -1,0 +1,64 @@
+name: Reusable Semantic Version Tag
+
+on:
+  workflow_call:
+    inputs:
+      version-level:
+        description: "Version bump type (major, minor, patch, alpha, beta, rc, dev, etc.)"
+        required: false
+        default: ""
+        type: string
+      specific-version:
+        description: "Explicit version to tag (e.g., 1.2.3). If provided, bump is skipped."
+        required: false
+        default: ""
+        type: string
+      tag-prefix:
+        description: "Prefix for tags (like 'v')"
+        required: false
+        default: "v"
+        type: string
+      current-version:
+        description: "Current version to base bump from (optional)"
+        required: false
+        default: ""
+        type: string
+    outputs:
+      new_tag:
+        description: "The new semantic version tag created"
+        value: ${{ jobs.create-tag.outputs.tag }}
+    secrets:
+      token:
+        description: "GitHub token for tag push"
+        required: false
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.semver.outputs.new_tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate or use specific version tag
+        id: semver
+        uses: anantakumarghosh/semver-tag-action@main
+        with:
+          version-level: ${{ inputs['version-level'] }}
+          specific-version: ${{ inputs['specific-version'] }}
+          current-version: ${{ inputs['current-version'] }}
+          tag-prefix: ${{ inputs['tag-prefix'] }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.token || github.token }}
+
+      - name: Tag Summary
+        run: |
+          echo "✅ Created tag: ${{ steps.semver.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 semver-tag-action Details" >> $GITHUB_STEP_SUMMARY
+          echo "Using [anantakumarghosh/semver-tag-action](https://github.com/anantakumarghosh/semver-tag-action/tree/main" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See the [README](https://github.com/anantakumarghosh/semver-tag-action/blob/main/README.md) for more details." >> $GITHUB_STEP_SUMMARY
