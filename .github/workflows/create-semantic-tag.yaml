@@ -32,7 +32,7 @@ permissions:
 jobs:
   create-tag:
     if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true)
-    uses: ./.github/workflows/reusable-semver-tag.yml
+    uses: ./.github/workflows/reusable-semantic-version-tag.yml
     with:
       version-level: ${{ github.event.inputs.version_type || 'patch' }}
       specific-version: ${{ github.event.inputs.specific_version || '' }}
