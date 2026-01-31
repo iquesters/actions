@@ -42,10 +42,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.token || github.token }}
 
       - name: Generate or use specific version tag
         id: semver
-        uses: anantakumarghosh/semver-tag-action@main
+        uses: anantakumarghosh/semver-tag-action@v2.0.0
         with:
           version-level: ${{ inputs['version-level'] }}
           specific-version: ${{ inputs['specific-version'] }}
@@ -56,9 +58,9 @@ jobs:
 
       - name: Tag Summary
         run: |
-          echo "✅ Created tag: ${{ steps.semver.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Created tag" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 semver-tag-action Details" >> $GITHUB_STEP_SUMMARY
-          echo "Using [anantakumarghosh/semver-tag-action](https://github.com/anantakumarghosh/semver-tag-action/tree/main" >> $GITHUB_STEP_SUMMARY
+          echo "Using [anantakumarghosh/semver-tag-action](https://github.com/anantakumarghosh/semver-tag-action/tree/main)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "See the [README](https://github.com/anantakumarghosh/semver-tag-action/blob/main/README.md) for more details." >> $GITHUB_STEP_SUMMARY
