@@ -61,8 +61,8 @@ jobs:
           fi
           latest=$(git tag --list | while IFS= read -r tag; do
             version="${tag#"$TAG_PREFIX"}"
-            if [[ "$tag" == "$TAG_PREFIX"* && "$version" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then
-              printf '%s\\n' "$tag"
+            if [[ "$tag" == "$TAG_PREFIX"* && "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              printf '%s\n' "$tag"
             fi
           done | sort -V | tail -n 1)
           if [[ -z "$latest" ]]; then
