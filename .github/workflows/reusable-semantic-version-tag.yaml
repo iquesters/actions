@@ -45,13 +45,39 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.token || github.token }}
 
+      # The upstream action uses git describe (nearest reachable tag), which
+      # may select an older version after a merge even when a newer tag exists.
+      - name: Detect highest existing stable version
+        id: latest_version
+        shell: bash
+        env:
+          TAG_PREFIX: ${{ inputs['tag-prefix'] }}
+          CURRENT_VERSION: ${{ inputs['current-version'] }}
+          SPECIFIC_VERSION: ${{ inputs['specific-version'] }}
+        run: |
+          if [[ -n "$SPECIFIC_VERSION" || -n "$CURRENT_VERSION" ]]; then
+            echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          latest=$(git tag --list | while IFS= read -r tag; do
+            version="${tag#"$TAG_PREFIX"}"
+            if [[ "$tag" == "$TAG_PREFIX"* && "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              printf '%s\n' "$tag"
+            fi
+          done | sort -V | tail -n 1)
+          if [[ -z "$latest" ]]; then
+            latest="${TAG_PREFIX}0.0.0"
+          fi
+          echo "Latest stable tag: $latest"
+          echo "version=$latest" >> "$GITHUB_OUTPUT"
+
       - name: Generate or use specific version tag
         id: semver
         uses: anantakumarghosh/semver-tag-action@v2.0.0
         with:
           version-level: ${{ inputs['version-level'] }}
           specific-version: ${{ inputs['specific-version'] }}
-          current-version: ${{ inputs['current-version'] }}
+          current-version: ${{ steps.latest_version.outputs.version }}
           tag-prefix: ${{ inputs['tag-prefix'] }}
         env:
           GITHUB_TOKEN: ${{ secrets.token || github.token }}
