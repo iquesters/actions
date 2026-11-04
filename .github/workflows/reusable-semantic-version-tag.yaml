@@ -45,6 +45,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.token || github.token }}
 
+      # The upstream action uses `git describe`, which picks the nearest
+      # reachable tag rather than the highest version in the repository.
+      # In a merged PR this can select an existing tag (e.g. v0.0.65).
+      - name: Detect latest existing stable version
+        id: latest_version
+        shell: bash
+        env:
+          TAG_PREFIX: ${{ inputs['tag-prefix'] }}
+          CURRENT_VERSION: ${{ inputs['current-version'] }}
+          SPECIFIC_VERSION: ${{ inputs['specific-version'] }}
+        run: |
+          if [[ -n "$SPECIFIC_VERSION" || -n "$CURRENT_VERSION" ]]; then
+            echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Only stable numeric SemVer tags are used as the bump baseline.
+          # Any prerelease tags remain separate; all tags were fetched by checkout.
+          latest=$(git tag --list | grep -E '^v?[0-9]+\\.[0-9]+\\.[0-9]+        id: semver
+        uses: anantakumarghosh/semver-tag-action@v2.0.0
+        with:
+          version-level: ${{ inputs['version-level'] }}
+          specific-version: ${{ inputs['specific-version'] }}
+          current-version: ${{ steps.latest_version.outputs.version }}
+          tag-prefix: ${{ inputs['tag-prefix'] }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.token || github.token }}
+
+      - name: Tag Summary
+        run: |
+          echo "✅ Created tag" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 semver-tag-action Details" >> $GITHUB_STEP_SUMMARY
+          echo "Using [anantakumarghosh/semver-tag-action](https://github.com/anantakumarghosh/semver-tag-action/tree/main)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See the [README](https://github.com/anantakumarghosh/semver-tag-action/blob/main/README.md) for more details." >> $GITHUB_STEP_SUMMARY | sort -V | tail -n 1 || true)
+          if [[ -z "$latest" ]]; then
+            latest="${TAG_PREFIX}0.0.0"
+          fi
+          echo "Latest stable tag: $latest"
+          echo "version=$latest" >> "$GITHUB_OUTPUT"
+
       - name: Generate or use specific version tag
         id: semver
         uses: anantakumarghosh/semver-tag-action@v2.0.0
